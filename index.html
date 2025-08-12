@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technician Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .app-container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: #f8f9fa;
+            min-height: 100vh;
+            position: relative;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .content-area {
+            position: relative;
+            height: calc(100vh - 140px);
+            overflow: hidden;
+        }
+
+        .tab-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 20px;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+        }
+
+        .tab-content.active {
+            transform: translateX(0);
+        }
+
+        .tab-content.prev {
+            transform: translateX(-100%);
+        }
+
+        /* Cards */
+        .ticket-card {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            border: 1px solid #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .ticket-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .ticket-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .customer-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .distance-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .user-status {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-available {
+            background: #10b981;
+            color: #065f46;
+        }
+
+        .status-busy {
+            background: #f59e0b;
+            color: #92400e;
+        }
+
+        .status-away {
+            background: #ef4444;
+            color: #991b1b;
+        }
+
+        .preferred-time {
+            font-size: 12px;
+            color: #6b7280;
+            font-style: italic;
+            margin-bottom: 8px;
+        }
+
+        .problem-desc {
+            color: #6b7280;
+            margin-bottom: 16px;
+            line-height: 1.5;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 1px solid #d1d5db;
+        }
+
+        .btn-secondary:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .btn-success:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Claimed Ticket Detailed View */
+        .claimed-ticket {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 2px solid #f59e0b;
+        }
+
+        .ticket-detail {
+            margin-bottom: 12px;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 4px;
+        }
+
+        .detail-value {
+            color: #6b7280;
+            line-height: 1.4;
+        }
+
+        /* History Items */
+        .history-item {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            border-left: 4px solid #10b981;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .history-date {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .earnings {
+            font-weight: 700;
+            color: #059669;
+        }
+
+        .feedback-rating {
+            color: #f59e0b;
+        }
+
+        /* Profile Section */
+        .profile-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 0 auto 16px;
+        }
+
+        .profile-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #1f2937;
+        }
+
+        .profile-role {
+            color: #6b7280;
+            margin-bottom: 16px;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: space-around;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+
+        /* Earnings Bar */
+        .earnings-bar {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #059669, #10b981);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+            font-weight: 600;
+            z-index: 10;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateX(-50%) translateY(100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            padding: 12px 20px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            min-width: 60px;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .nav-item:not(.active) {
+            color: #6b7280;
+        }
+
+        .nav-icon {
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .nav-label {
+            font-size: 11px;
+            font-weight: 500;
+        }
+
+        .badge {
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: absolute;
+            top: -5px;
+            right: -5px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .app-container {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>FitGO</h1>
+            <p class="subtitle">Kerala Home Services Dashboard</p>
+        </header>
+
+        <main class="content-area">
+            <!-- Home Tab -->
+            <div id="home" class="tab-content active">
+                <div id="available-tickets">
+                    <!-- Tickets will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Claimed Ticket Tab -->
+            <div id="claimed" class="tab-content">
+                <div id="claimed-ticket-container">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No claimed ticket</p>
+                        <small>Claim a ticket from Home to get started</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Tab -->
+            <div id="history" class="tab-content">
+                <div id="history-container">
+                    <!-- History items will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Profile Tab -->
+            <div id="profile" class="tab-content">
+                <div class="profile-card">
+                    <div class="profile-avatar">RK</div>
+                    <h2 class="profile-name">Ravi Kumar</h2>
+                    <p class="profile-role">Senior Home Appliance Technician</p>
+                    <div class="profile-stats">
+                        <div class="stat">
+                            <div class="stat-value">347</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">4.9</div>
+                            <div class="stat-label">Rating</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-value">98%</div>
+                            <div class="stat-label">Success</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="ticket-card">
+                    <h3 style="margin-bottom: 16px; color: #1f2937;">Settings</h3>
+                    <div style="margin-bottom: 12px;">
+                        <div class="detail-label">Service Areas</div>
+                        <div class="detail-value">Kochi, Ernakulam, Thrissur, Idukki</div>
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <div class="detail-label">Working Hours</div>
+                        <div class="detail-value">Monday - Saturday, 9:00 AM - 7:00 PM</div>
+                    </div>
+                    <div>
+                        <div class="detail-label">Specializations</div>
+                        <div class="detail-value">AC, Refrigerator, Washing Machine, Microwave</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Today's Earnings Bar -->
+        <div class="earnings-bar" id="earnings-bar">
+            💰 Today's Earnings: ₹<span id="today-earnings">0</span>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <div class="nav-item active" data-tab="home">
+                <div class="nav-icon">🏠</div>
+                <div class="nav-label">Home</div>
+                <div class="badge" id="home-badge">6</div>
+            </div>
+            <div class="nav-item" data-tab="claimed">
+                <div class="nav-icon">📋</div>
+                <div class="nav-label">Claimed</div>
+            </div>
+            <div class="nav-item" data-tab="history">
+                <div class="nav-icon">📜</div>
+                <div class="nav-label">History</div>
+            </div>
+            <div class="nav-item" data-tab="profile">
+                <div class="nav-icon">👤</div>
+                <div class="nav-label">Profile</div>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        // Application State
+        let availableTickets = [
+            {
+                id: 1,
+                name: "Priya Menon",
+                phone: "+91 98470 12345",
+                address: "Thekkady Road, Kumily, Idukki District, Kerala 685509",
+                problem: "AC not cooling properly",
+                description: "Split AC in bedroom not cooling during hot weather. Filter cleaned, still issue persists.",
+                distance: "2.3 km",
+                time: "2:30 PM",
+                mapLink: "https://maps.google.com/?q=Thekkady+Road+Kumily+Idukki",
+                userStatus: "available", // available, busy, away
+                preferredTime: "After 2:00 PM"
+            },
+            {
+                id: 2,
+                name: "Rajesh Kumar",
+                phone: "+91 94474 67890",
+                address: "Marine Drive, Ernakulam, Kochi, Kerala 682031",
+                problem: "Refrigerator making noise",
+                description: "Double door fridge making grinding sound from compressor area since yesterday morning.",
+                distance: "1.8 km",
+                time: "3:15 PM",
+                mapLink: "https://maps.google.com/?q=Marine+Drive+Ernakulam+Kochi",
+                userStatus: "busy", // available, busy, away
+                preferredTime: "Evening after 6 PM"
+            },
+            {
+                id: 3,
+                name: "Sanya Thomas",
+                phone: "+91 98951 23456",
+                address: "Palarivattom, Kochi, Kerala 682025",
+                problem: "Washing machine not draining",
+                description: "Front load washing machine water not draining after wash cycle. Clothes remain wet.",
+                distance: "3.1 km",
+                time: "4:00 PM",
+                mapLink: "https://maps.google.com/?q=Palarivattom+Kochi",
+                userStatus: "available", // available, busy, away
+                preferredTime: "Available now"
+            },
+            {
+                id: 4,
+                name: "Arun Nair",
+                phone: "+91 95621 78901",
+                address: "Kovalam Beach Road, Thiruvananthapuram, Kerala 695527",
+                problem: "Microwave not heating",
+                description: "Panasonic microwave oven turns on but food not heating. Turntable working fine.",
+                distance: "4.5 km",
+                time: "4:45 PM",
+                mapLink: "https://maps.google.com/?q=Kovalam+Beach+Road+Thiruvananthapuram",
+                userStatus: "away", // available, busy, away
+                preferredTime: "Tomorrow morning"
+            },
+            {
+                id: 5,
+                name: "Meera Pillai",
+                phone: "+91 98473 45678",
+                address: "Munnar Tea Estate Road, Idukki, Kerala 685612",
+                problem: "Mixer grinder not working",
+                description: "Preethi mixer grinder stopped working suddenly. Motor not starting at all.",
+                distance: "12.8 km",
+                time: "5:30 PM",
+                mapLink: "https://maps.google.com/?q=Munnar+Tea+Estate+Road+Idukki",
+                userStatus: "available", // available, busy, away
+                preferredTime: "Available anytime"
+            },
+            {
+                id: 6,
+                name: "Vishnu Varma",
+                phone: "+91 94008 90123",
+                address: "Backwater Resort Area, Alleppey, Kerala 688012",
+                problem: "Water heater not working",
+                description: "Electric geyser in guest bathroom not heating water. Red light not coming on.",
+                distance: "8.7 km",
+                time: "6:15 PM",
+                mapLink: "https://maps.google.com/?q=Backwater+Resort+Area+Alleppey",
+                userStatus: "busy", // available, busy, away
+                preferredTime: "After 7:00 PM"
+            }
+        ];
+
+        let claimedTicket = null;
+        let completedTickets = [
+            {
+                id: 101,
+                customerName: "Lakshmi Nair",
+                problem: "Washing machine repair",
+                completedDate: "Aug 11, 2025",
+                earnings: 850,
+                rating: "⭐⭐⭐⭐⭐",
+                feedback: "വളരെ നല്ല സേവനം! (Very good service!)"
+            },
+            {
+                id: 102,
+                customerName: "Suresh Menon",
+                problem: "AC installation",
+                completedDate: "Aug 10, 2025", 
+                earnings: 1200,
+                rating: "⭐⭐⭐⭐⭐",
+                feedback: "Professional work, highly recommended"
+            },
+            {
+                id: 103,
+                customerName: "Asha Kumari",
+                problem: "Refrigerator cooling issue",
+                completedDate: "Aug 9, 2025",
+                earnings: 950,
+                rating: "⭐⭐⭐⭐",
+                feedback: "Quick service, reasonable price"
+            }
+        ];
+
+        let todayEarnings = 0;
+
+        // DOM Elements
+        const tabContents = document.querySelectorAll('.tab-content');
+        const navItems = document.querySelectorAll('.nav-item');
+        const availableTicketsContainer = document.getElementById('available-tickets');
+        const claimedTicketContainer = document.getElementById('claimed-ticket-container');
+        const historyContainer = document.getElementById('history-container');
+        const earningsElement = document.getElementById('today-earnings');
+        const homeBadge = document.getElementById('home-badge');
+
+        // Initialize App
+        function init() {
+            renderAvailableTickets();
+            renderHistory();
+            updateEarnings();
+            updateHomeBadge();
+        }
+
+        // Navigation
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const targetTab = item.dataset.tab;
+                switchTab(targetTab);
+                
+                // Update active nav item
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+
+        function switchTab(tabName) {
+            // Hide all tabs first
+            tabContents.forEach(tab => {
+                tab.classList.remove('active', 'prev');
+            });
+
+            // Show target tab with animation
+            setTimeout(() => {
+                const targetTab = document.getElementById(tabName);
+                targetTab.classList.add('active');
+            }, 50);
+        }
+
+        // Render Available Tickets
+        function renderAvailableTickets() {
+            availableTicketsContainer.innerHTML = '';
+            
+            if (availableTickets.length === 0) {
+                availableTicketsContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">✅</div>
+                        <p>All tickets claimed!</p>
+                        <small>Great job! Check back later for new tickets</small>
+                    </div>
+                `;
+                return;
+            }
+
+            availableTickets.forEach(ticket => {
+                const statusText = {
+                    'available': 'Available Now',
+                    'busy': 'Currently Busy',
+                    'away': 'Not Available'
+                };
+
+                const statusClass = `status-${ticket.userStatus}`;
+
+                const ticketElement = document.createElement('div');
+                ticketElement.className = 'ticket-card';
+                ticketElement.innerHTML = `
+                    <div class="ticket-header">
+                        <h3 class="customer-name">${ticket.name}</h3>
+                        <span class="distance-badge">${ticket.distance}</span>
+                    </div>
+                    <div class="user-status ${statusClass}">
+                        <span class="status-indicator ${statusClass}"></span>
+                        ${statusText[ticket.userStatus]}
+                    </div>
+                    <div class="preferred-time">🕒 ${ticket.preferredTime}</div>
+                    <p class="problem-desc">${ticket.description}</p>
+                    <div class="button-group">
+                        <a href="${ticket.mapLink}" target="_blank" class="btn btn-secondary">
+                            📍 Locate User
+                        </a>
+                        <button class="btn btn-primary" onclick="claimTicket(${ticket.id})" ${ticket.userStatus !== 'available' ? 'style="opacity: 0.7;"' : ''}>
+                            ✋ Claim Ticket
+                        </button>
+                    </div>
+                `;
+                availableTicketsContainer.appendChild(ticketElement);
+            });
+        }
+
+        // Render Claimed Ticket
+        function renderClaimedTicket() {
+            if (!claimedTicket) {
+                claimedTicketContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No claimed ticket</p>
+                        <small>Claim a ticket from Home to get started</small>
+                    </div>
+                `;
+                return;
+            }
+
+            claimedTicketContainer.innerHTML = `
+                <div class="ticket-card claimed-ticket">
+                    <div class="ticket-header">
+                        <h3 class="customer-name">${claimedTicket.name}</h3>
+                        <span class="distance-badge">${claimedTicket.distance}</span>
+                    </div>
+                    
+                    <div class="ticket-detail">
+                        <div class="detail-label">📞 Phone</div>
+                        <div class="detail-value">${claimedTicket.phone}</div>
+                    </div>
+                    
+                    <div class="ticket-detail">
+                        <div class="detail-label">📍 Address</div>
+                        <div class="detail-value">${claimedTicket.address}</div>
+                    </div>
+                    
+                    <div class="ticket-detail">
+                        <div class="detail-label">🔧 Problem</div>
+                        <div class="detail-value">${claimedTicket.problem}</div>
+                    </div>
+                    
+                    <div class="ticket-detail">
+                        <div class="detail-label">📝 Description</div>
+                        <div class="detail-value">${claimedTicket.description}</div>
+                    </div>
+                    
+                    <div class="ticket-detail">
+                        <div class="detail-label">⏰ Scheduled Time</div>
+                        <div class="detail-value">${claimedTicket.time}</div>
+                    </div>
+                    
+                    <div class="button-group">
+                        <a href="${claimedTicket.mapLink}" target="_blank" class="btn btn-secondary">
+                            🗺️ Locate
+                        </a>
+                        <button class="btn btn-success" onclick="markCompleted()">
+                            ✅ Mark Completed
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Render History
+        function renderHistory() {
+            historyContainer.innerHTML = '';
+            
+            if (completedTickets.length === 0) {
+                historyContainer.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📜</div>
+                        <p>No completed tickets yet</p>
+                        <small>Your completed jobs will appear here</small>
+                    </div>
+                `;
+                return;
+            }
+
+            completedTickets.forEach(ticket => {
+                const historyElement = document.createElement('div');
+                historyElement.className = 'history-item';
+                historyElement.innerHTML = `
+                    <div class="history-header">
+                        <span class="history-date">${ticket.completedDate}</span>
+                        <span class="earnings">+₹${ticket.earnings}</span>
+                    </div>
+                    <h4 style="color: #1f2937; margin-bottom: 4px;">${ticket.customerName}</h4>
+                    <p style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">${ticket.problem}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span class="feedback-rating">${ticket.rating}</span>
+                        <small style="color: #6b7280;">"${ticket.feedback}"</small>
+                    </div>
+                `;
+                historyContainer.appendChild(historyElement);
+            });
+        }
+
+        // Claim Ticket
+        function claimTicket(ticketId) {
+            const ticket = availableTickets.find(t => t.id === ticketId);
+            if (!ticket) return;
+
+            // Move to claimed
+            claimedTicket = ticket;
+            availableTickets = availableTickets.filter(t => t.id !== ticketId);
+
+            // Update UI
+            renderAvailableTickets();
+            renderClaimedTicket();
+            updateHomeBadge();
+
+            // Show success feedback
+            showNotification('Ticket claimed successfully! 🎉');
+            
+            // Auto-switch to claimed tab
+            setTimeout(() => {
+                switchTab('claimed');
+                navItems.forEach(nav => nav.classList.remove('active'));
+                document.querySelector('[data-tab="claimed"]').classList.add('active');
+            }, 500);
+        }
+
+        // Mark Completed
+        function markCompleted() {
+            if (!claimedTicket) return;
+
+            const earnings = Math.floor(Math.random() * 500) + 750; // Random earnings between ₹750-₹1250
+            const ratings = ['⭐⭐⭐⭐⭐', '⭐⭐⭐⭐', '⭐⭐⭐⭐⭐'];
+            const feedbacks = ['വളരെ നല്ല സേവനം! (Great service!)', 'Very professional work', 'Quick and efficient!', 'Excellent technician', 'Highly recommended', 'നന്ദി! (Thank you!)'];
+
+            const completedTicket = {
+                id: Date.now(),
+                customerName: claimedTicket.name,
+                problem: claimedTicket.problem,
+                completedDate: 'Aug 12, 2025',
+                earnings: earnings,
+                rating: ratings[Math.floor(Math.random() * ratings.length)],
+                feedback: feedbacks[Math.floor(Math.random() * feedbacks.length)]
+            };
+
+            // Add to history
+            completedTickets.unshift(completedTicket);
+            
+            // Update today's earnings
+            todayEarnings += earnings;
+            
+            // Clear claimed ticket
+            claimedTicket = null;
+
+            // Update UI
+            renderClaimedTicket();
+            renderHistory();
+            updateEarnings();
+
+            // Show success feedback
+            showNotification(`Job completed! +₹${earnings} earned 💰`);
+            
+            // Auto-switch to history tab
+            setTimeout(() => {
+                switchTab('history');
+                navItems.forEach(nav => nav.classList.remove('active'));
+                document.querySelector('[data-tab="history"]').classList.add('active');
+            }, 500);
+        }
+
+        // Update earnings display
+        function updateEarnings() {
+            earningsElement.textContent = todayEarnings;
+        }
+
+        // Update home badge
+        function updateHomeBadge() {
+            homeBadge.textContent = availableTickets.length;
+            if (availableTickets.length === 0) {
+                homeBadge.style.display = 'none';
+            } else {
+                homeBadge.style.display = 'flex';
+            }
+        }
+
+        // Show notification
+        function showNotification(message) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: #059669;
+                color: white;
+                padding: 12px 24px;
+                border-radius: 25px;
+                font-weight: 600;
+                z-index: 1000;
+                box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+                animation: slideDown 0.5s ease;
+            `;
+            
+            // Add keyframes for animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideDown {
+                    from {
+                        transform: translateX(-50%) translateY(-50px);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(-50%) translateY(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            // Remove notification after 3 seconds
+            setTimeout(() => {
+                notification.style.animation = 'slideDown 0.5s ease reverse';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                    document.head.removeChild(style);
+                }, 500);
+            }, 3000);
+        }
+
+        // Initialize the app
+        init();
+    </script>
+</body>
+</html>
